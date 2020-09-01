@@ -14,69 +14,26 @@ Released under the GPLv3 license.
 #endif
 
 void snore(uint32_t snore_time){
-  cbi(ADCSRA, ADEN);                   // switch Analog to Digitalconverter OFF
+  const int NUM_WD_CONFIGURATIONS = 10;
+  const int WD_TIMEOUT_MS[NUM_WD_CONFIGURATIONS] = {16, 32, 64, 125, 250, 500, 1000, 2000, 4000, 8000};
 
   set_sleep_mode(SLEEP_MODE_PWR_DOWN); // sleep mode is set here
   sleep_enable();
   sleep_bod_disable();
 
-  while (snore_time > 0) {
-    if (snore_time >= 8000) {
-      ts_set_sleep(9);
-      ts_system_sleep();
-      snore_time -= 8000;
+  int timeout_pointer = NUM_WD_CONFIGURATIONS - 1;
+  while (snore_time > WD_TIMEOUT_MS[0]) {
+    if ( snore_time < WD_TIMEOUT_MS[timeout_pointer]){
+      timeout_pointer--;
+      continue;
     }
-    else if (snore_time >= 4000) {
-      ts_set_sleep(8);
-      ts_system_sleep();
-      snore_time -= 4000;
-    }
-    else if (snore_time >= 2000) {
-      ts_set_sleep(7);
-      ts_system_sleep();
-      snore_time -= 2000;
-    }
-    else if (snore_time >= 1000) {
-      ts_set_sleep(6);
-      ts_system_sleep();
-      snore_time -= 1000;
-    }
-    else if (snore_time >= 500) {
-      ts_set_sleep(5);
-      ts_system_sleep();
-      snore_time -= 500;
-    }
-    else if (snore_time >= 250) {
-      ts_set_sleep(4);
-      ts_system_sleep();
-      snore_time -= 250;
-    }
-    else if (snore_time >= 128) {
-      ts_set_sleep(3);
-      ts_system_sleep();
-      snore_time -= 128;
-    }
-    else if (snore_time >= 64) {
-      ts_set_sleep(2);
-      ts_system_sleep();
-      snore_time -= 64;
-    }
-    else if (snore_time >= 32) {
-      ts_set_sleep(1);
-      ts_system_sleep();
-      snore_time -= 32;
-    }
-    else if (snore_time >= 16) {
-      ts_set_sleep(0);
-      ts_system_sleep();
-      snore_time -= 16;
-    }
-    else {
-      delay(snore_time);
-      snore_time = 0;
-    }
+    ts_set_sleep(timeout_pointer);
+    ts_system_sleep();
+    snore_time -= WD_TIMEOUT_MS[timeout_pointer];
   }
-  sbi(ADCSRA, ADEN);                   // switch Analog to Digitalconverter ON
+  if(snore_time > 0){
+    delay(snore_time);
+  }
 }
 
 void ts_system_sleep(){
